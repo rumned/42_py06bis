@@ -26,22 +26,22 @@ class DataProcessor(abc.ABC):
 
 
 class NumericProcessor(DataProcessor):
-	def validate(self, data: int | float | list[int | float]):
-		data.valid = False
-		data.checked = False
-		data.type = ""
+	def validate(self, data: int | float | list[int | float]) -> bool:
+		self.valid = False
+		self.checked = False
+		self.type = ""
 		if isinstance (data, list):
 			for i in data:
 				if not isinstance(data[i], (int, float)):
-					data.valid = False
+					self.valid = False
 					break
 				else:
-					data.valid = True
-			data.checked = True
+					self.valid = True
+			self.checked = True
 
 		elif isinstance (data, (int, float)):
-			data.valid = True
-			data.checked = True
+			self.valid = True
+			self.checked = True
 
 
 	def ingest(self, data: int | float | list[int | float]) -> None:
