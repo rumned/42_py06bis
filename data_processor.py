@@ -47,6 +47,53 @@ class NumericProcessor(DataProcessor):
             self.rank += 1
 
 
+class TextProcessor(DataProcessor):
+    def validate(self, data: typing.Any) -> bool:
+        if isinstance(data, list):
+            for i in data:
+                if not isinstance(i, str):
+                    return False
+            return True
+        return isinstance(data, str)
+
+
+    def ingest(self, data: list[str] | str) -> None:
+        if not self.validate(data):
+            raise Exception("Improper text data")
+        if isinstance(data, list):
+            for i in data:
+                self.order.append(self.rank)
+                self.stored.append(i)
+                self.rank += 1
+        else:
+            self.order.append(self.rank)
+            self.stored.append(data)
+            self.rank += 1
+
+
+class LogProcessor(DataProcessor):
+    def validate(self, data: typing.Any) -> bool:
+        if isinstance(data, list):
+            for i in data:
+                if not isinstance(i, [dict[str, str]]):
+                    return False
+            return True
+        return isinstance(data, [dict[str, str]])
+
+
+    def ingest(self, data: list[dict[str, str]] | dict[str, str]) -> None:
+        if not self.validate(data):
+            raise Exception("Improper text data")
+        if isinstance(data, list):
+            for i in data:
+                self.order.append(self.rank)
+                self.stored.append(i)
+                self.rank += 1
+        else:
+            self.order.append(self.rank)
+            self.stored.append(data)
+            self.rank += 1
+
 if __name__ == "__main__":
     print("=== Code Nexus - Data Processor ===")
     print("\nTesting Numeric Processor...")
