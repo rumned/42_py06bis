@@ -113,14 +113,14 @@ class LogProcessor(DataProcessor):
 def run_case(processor, ingest_data, validate_data=NOT_VALIDATED):
     try:
         if validate_data is not NOT_VALIDATED:
-            print(f" validate({repr(validate_data)}): "
-                  f"{processor.validate(validate_data)}")
+            print(f"validate({repr(validate_data)}): "
+                  f"{processor.validate(validate_data)}\n")
         processor.ingest(ingest_data)
-        print(f" ingest({repr(ingest_data)}): OK")
+        print(f"ingest({repr(ingest_data)}): OK\n")
         for i in range(len(processor.stored)):
-            print(f" output(): {processor.output()}")
+            print(f"output(): {processor.output()}\n")
     except Exception as e:
-        print(f" ingest({repr(ingest_data)}) got exception: {e}")
+        print(f"ingest({repr(ingest_data)}) got exception: {e}\n")
 
 
 if __name__ == "__main__":
@@ -130,24 +130,39 @@ if __name__ == "__main__":
     text = TextProcessor()
     log = LogProcessor()
 
-    print("\nTesting Numeric Processor...")
-    run_case(num, 42, 42)
-    run_case(num, '42', '42')
-    run_case(num, [1,2,3,4,5], [1,2,3,4,5])
-    run_case(num, ['1','2','3','4',5], ['1','2','3','4',5])
-    lst = [1,2,3,4,5]
-    run_case(num, lst, lst)
-    str_lst = ['1','2','3','4','5'],
-    run_case(num, str_lst, str_lst)
-    run_case(num, 12, 10)
-    run_case(num, 10)
-    print("\nTesting Text Processor...")
-    run_case(text, 42, 42)
-    run_case(text, '42', '42')
-    run_case(text, ['1','2','3','4',5], ['1','2','3','4',5])
-    lst = [1,2,3,4,5]
-    run_case(text, lst, lst)
+    num_lst = [1,2,3,4,5]
     str_lst = ['1','2','3','4','5']
-    run_case(text, str_lst, str_lst)
-    run_case(text, '12', '10')
-    run_case(text, '10')
+    mixed_lst = ['1','2','3','4',5]
+    num_int = 42
+    str_int = '42'
+    num_float = 4.2
+    str_float = '4.2'
+    str1 = 'Hello'
+    str2 = 'World'
+    dict_lst = [{'log_level': 'NOTICE', 'log_message': 'Connection to server'}, 
+                {'log_level': 'ERROR', 'log_message': 'Unauthorized access!!'}]
+    dict1 = {'message' : 'Hello'}
+
+
+    print("\nTesting Numeric Processor...\n")
+    run_case(num, num_int, num_int)
+    run_case(num, str_int, str_int)
+    run_case(num, [1,2,3,4,5], [1,2,3,4,5])
+    run_case(num, mixed_lst, mixed_lst )
+    run_case(num, num_int, num_float)
+    run_case(num, num_float)
+
+    print("\nTesting Text Processor...\n")
+    run_case(text, num_int, num_int)
+    run_case(text, str_int, str_int)
+    run_case(text, [1,2,3,4,5], [1,2,3,4,5])
+    run_case(text, mixed_lst, mixed_lst )
+    run_case(text, str2, str1)
+    run_case(text, str1)
+
+    print("\nTesting Log Processor...\n")
+    run_case(log, str1, str1)
+    run_case(log, num_int, num_int)
+    run_case(log, dict1, dict1 )
+    run_case(log, dict_lst, dict_lst)
+    run_case(log, dict_lst)
