@@ -146,7 +146,6 @@ class DataStream():
     def process_stream(self, stream: list[typing.Any]) -> None:
         try:
             for element in stream:
-                handled = False
                 for proc in self.registered:
                     if proc.validate(element):
                         proc.ingest(element)
@@ -154,8 +153,8 @@ class DataStream():
                                   if isinstance(element, list) else 1)
                         proc.count += amount
                         self.received[proc] += amount
-                        handled = True
-                if not handled:
+                        break
+                else:
                     print("DataStream error - Can't process element in "
                           f"stream: {element}")
         except Exception as e:
@@ -176,33 +175,35 @@ if __name__ == "__main__":
     print("=== Code Nexus - Data Stream ===")
     print("Initialize Data Stream...")
     stream = DataStream()
-    stream.print_processors_stats()
-    print("Registering Numeric Processor")
+    text = TextProcessor()
+    log = LogProcessor()
     numeric = NumericProcessor()
-    stream.register_processor(numeric)
+    stream.print_processors_stats()
+    print("Registering one type of Processor")
+    stream.register_processor(log)
+
     batch = [
         "Hello world",
         [3.14, -1, 2.71],
         [{"log_level": "WARNING",
           "log_message": "Telnet access! Use ssh instead"},
-         {"log_level": "INFO", "log_message": "User wil is connected"}],
+         {"log_level": "INFO", "log_message": "User is connected"}],
         42,
         ["Hi", "five"],
     ]
+
     print(f"Send first batch of data on stream: {batch}")
     stream.process_stream(batch)
     stream.print_processors_stats()
     print("Registering other data processors")
-    text = TextProcessor()
-    log = LogProcessor()
     stream.register_processor(text)
-    stream.register_processor(log)
+    stream.register_processor(numeric)
     print("Send the same batch again")
     stream.process_stream(batch)
     stream.print_processors_stats()
     print("Consume some elements from the data processors: "
-          "Numeric 3, Text 2, Log 1")
-    for i in range(3):
+          "Numeric 2, Text 2, Log 1")
+    for i in range(2):
         numeric.output()
     for i in range(2):
         text.output()
