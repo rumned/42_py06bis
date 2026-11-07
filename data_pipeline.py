@@ -176,7 +176,7 @@ class DataStream():
             print(f"{name}: total {self.received[proc]} items processed, "
                   f"remaining {proc.count} on processor")
 
-	def output_pipeline(self, nb: int, plugin: ExportPlugin) -> None:
+    def output_pipeline(self, nb: int, plugin: ExportPlugin) -> None:
             pass
 
 
