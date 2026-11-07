@@ -4,11 +4,10 @@ import typing
 
 NOT_VALIDATED = object()
 
-Protocol = typing.Protocol
 
-class ExportPlugin(Protocol):
-    def process_output(self, data: list[tuple[int,str]]) -> None:
-        pass
+class ExportPlugin(typing.Protocol):
+    def process_output(self, data: list[tuple[int, str]]) -> None:
+        ...
 
 
 class DataProcessor(abc.ABC):
@@ -134,6 +133,21 @@ def run_case(proc: DataProcessor,
         print(f"ingest({repr(i_data)}) got exception: {e}\n")
 
 
+class CSVExportPlugin:
+    def process_output(self, data: list[tuple[int, str]]) -> None:
+        print("CSV Output:")
+        print(",".join(value[1] for value in data))
+        print()
+
+
+class JSONExportPlugin:
+    def process_output(self, data: list[tuple[int, str]]) -> None:
+        items = [f'"item_{rank}": "{value}"' for rank, value in data]
+        print("JSON Output:")
+        print("{" + ", ".join(items) + "}")
+        print()
+
+
 class DataStream():
     def __init__(self) -> None:
         self.registered: list[DataProcessor] = []
@@ -167,7 +181,7 @@ class DataStream():
             print(e)
 
     def print_processors_stats(self) -> None:
-        print("== DataStream statistics ==")
+        print("\n== DataStream statistics ==")
         if not self.registered:
             print("No processor found, no data")
             return
@@ -175,10 +189,16 @@ class DataStream():
             name = type(proc).__name__
             print(f"{name}: total {self.received[proc]} items processed, "
                   f"remaining {proc.count} on processor")
+        print()
 
     def output_pipeline(self, nb: int, plugin: ExportPlugin) -> None:
-            pass
-
+        for proc in self.registered:
+            data: list[tuple[int, str]] = []
+            for i in range(nb):
+                if not proc.stored:
+                    break
+                data.append(proc.output())
+            plugin.process_output(data)
 
 
 if __name__ == "__main__":
@@ -189,8 +209,6 @@ if __name__ == "__main__":
     log = LogProcessor()
     numeric = NumericProcessor()
     stream.print_processors_stats()
-    print("Registering one type of Processor")
-    stream.register_processor(log)
 
     batch = [
         "Hello world",
@@ -202,20 +220,38 @@ if __name__ == "__main__":
         ["Hi", "five"],
     ]
 
+    batch_2 = [
+        21,
+        ['I love AI', 'LLMs are wonderful', 'Stay healthy'],
+        [{'log_level': 'ERROR', 'log_message': '500 server crash'},
+            {'log_level': 'NOTICE', 'log_message': 'Cert expires in 10 days'}],
+        [32, 42, 64, 84, 128, 168],
+        'World hello'
+        ]
+
+    print("Registering data processors")
+    stream.register_processor(numeric)
+    stream.register_processor(text)
+    stream.register_processor(log)
     print(f"Send first batch of data on stream: {batch}")
     stream.process_stream(batch)
     stream.print_processors_stats()
-    print("Registering other data processors")
-    stream.register_processor(text)
-    stream.register_processor(numeric)
-    print("Send the same batch again")
-    stream.process_stream(batch)
+
+    # print("Send the same batch again")
+    # stream.process_stream(batch)
+    # stream.print_processors_stats()
+    # print("Send the same batch again again")
+    # stream.process_stream(batch)
+    # stream.print_processors_stats()
+
+    print("Send 3 processed data from each processor to CSV plugin")
+    stream.output_pipeline(3, CSVExportPlugin())
     stream.print_processors_stats()
-    print("Consume some elements from the data processors: "
-          "Numeric 2, Text 2, Log 1")
-    for i in range(2):
-        numeric.output()
-    for i in range(2):
-        text.output()
-    log.output()
+
+    print("Send different batch")
+    stream.process_stream(batch_2)
+    stream.print_processors_stats()
+
+    print("Send 5 processed data from each processor to JSON plugin")
+    stream.output_pipeline(5, JSONExportPlugin())
     stream.print_processors_stats()
